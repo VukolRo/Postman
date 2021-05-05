@@ -27,12 +27,12 @@
 					"formdata": [
 						{
 							"key": "login",
-							"value": "qaro",
+							"value": "{{login}}",
 							"type": "text"
 						},
 						{
 							"key": "password",
-							"value": "qaro23",
+							"value": "{{password}}",
 							"type": "text"
 						}
 					]
@@ -60,10 +60,46 @@
 							"    pm.response.to.have.status(200);\r",
 							"});\r",
 							"\r",
-							"pm.test(\"Your test name\", function () {\r",
-							"    var jsonData = pm.response.json(start_qa_salary);\r",
-							"    pm.expect(jsonData.value).to.eql(1000);\r",
-							"});"
+							"const jsonData = pm.response.json();\r",
+							"/* Expected structure of response:\r",
+							"{'start_qa_salary':salary,\r",
+							" 'qa_salary_after_6_months': salary * 2,\r",
+							" 'qa_salary_after_12_months': salary * 2.9,\r",
+							" 'person': {'u_name':[name, salary, age],\r",
+							"                                'u_age':age,\r",
+							"                                'u_salary_1.5_year': salary * 4}\r",
+							"                                }\r",
+							"*/\r",
+							"// make a \"constant\" from task of home work\r",
+							"const expectedObject = {\r",
+							"    \"start_qa_salary\" : parseInt(pm.variables.get(\"salary\")),\r",
+							"    \"qa_salary_after_6_months\" : parseInt(pm.variables.get(\"salary\")) * 2,\r",
+							"    \"qa_salary_after_12_months\" : parseInt(pm.variables.get(\"salary\")) * 2.9,\r",
+							"    \"person\" : {\r",
+							"        \"u_name\" : [pm.variables.get(\"name\"), parseInt(pm.variables.get(\"salary\")), parseInt(pm.variables.get(\"age\"))],\r",
+							"        \"u_age\" : pm.variables.get(\"age\"),\r",
+							"        \"u_salary_1_5_year\" : parseInt(pm.variables.get(\"salary\")) *4\r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"pm.test(\"Response has expected structure\", () => {\r",
+							"    pm.expect(jsonData).to.deep.include(expectedObject);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'qa_salary_after_6_months' is correct\", () => {\r",
+							"    pm.expect(jsonData.qa_salary_after_6_months).to.eql(parseInt(pm.variables.get(\"salary\")) * 2);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'qa_salary_after_12_months' is correct\", () => {\r",
+							"    pm.expect(jsonData.qa_salary_after_12_months).to.eql(parseInt(pm.variables.get(\"salary\")) * 2.9);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'person.u_salary_1_5_year' is correct\", () => {\r",
+							"    pm.expect(jsonData.person.u_salary_1_5_year).to.eql(parseInt(pm.variables.get(\"salary\")) * 4);\r",
+							"});\r",
+							"\r",
+							"//parsing u_salary_1_5_years to environment\r",
+							"postman.setEnvironmentVariable(\"u_salary_1_5_year\", jsonData.person.u_salary_1_5_year);"
 						],
 						"type": "text/javascript"
 					}
@@ -95,6 +131,48 @@
 		},
 		{
 			"name": "new data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"/* Expected structure of response:\r",
+							"{'name':name,\r",
+							"  'age': int(age),\r",
+							"  'salary': [salary, str(salary*2), str(salary*3)]}\r",
+							"*/\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response has expected structure\", () => {\r",
+							"    pm.expect(jsonData.name).to.be.a(\"string\");\r",
+							"    pm.expect(jsonData.age).to.be.a(\"number\");\r",
+							"    pm.expect(jsonData.salary).to.be.an(\"array\");\r",
+							"    pm.expect(jsonData.salary[1]).to.be.a(\"string\");\r",
+							"    pm.expect(jsonData.salary[2]).to.be.a(\"string\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'salary[1]' is correct\", () => {\r",
+							"    pm.expect(parseInt(jsonData.salary[1])).to.eql(parseInt(pm.variables.get(\"salary\") * 2));\r",
+							"}); \r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'salary[2]' is correct\", () => {\r",
+							"    pm.expect(parseInt(jsonData.salary[2])).to.eql(parseInt(pm.variables.get(\"salary\") * 3));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Checking that 'salary[2]' more than 'salary[1]' and 'salary[0]'\", () => {\r",
+							"    pm.expect(parseInt(jsonData.salary[2]) > parseInt(jsonData.salary[1])).to.be.true;\r",
+							"    pm.expect(parseInt(jsonData.salary[2]) > parseInt(pm.variables.get(\"salary\"))).to.be.true;\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -137,6 +215,42 @@
 		},
 		{
 			"name": "test pet info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"/* Expected structure of response:\r",
+							"{'name': name,\r",
+							" 'age': age,\r",
+							" 'daily_food':weight * 0.012,\r",
+							" 'daily_sleep': weight * 2.5}\r",
+							"*/\r",
+							"\r",
+							"pm.test(\"Response has expected structure\", () => {\r",
+							"    pm.expect(jsonData.name).to.eql(pm.variables.get(\"pet_name\"));\r",
+							"    pm.expect(jsonData.age).to.eql(parseInt(pm.variables.get(\"pet_age\")));\r",
+							"    pm.expect(jsonData.daily_food).to.eql(pm.variables.get(\"pet_weight\") * 0.012);\r",
+							"    pm.expect(jsonData.daily_sleep).to.eql(pm.variables.get(\"pet_weight\") * 2.5);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'daily_food' is correct\", () => {\r",
+							"    pm.expect(parseInt(jsonData.daily_food)).to.eql(parseInt(pm.variables.get(\"pet_weight\") * 0.012));\r",
+							"}); \r",
+							"\r",
+							"pm.test(\"Checking that multiplication in 'daily_sleep' is correct\", () => {\r",
+							"    pm.expect(parseInt(jsonData.daily_sleep)).to.eql(parseInt(pm.variables.get(\"pet_weight\") * 2.5));\r",
+							"}); "
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -179,6 +293,47 @@
 		},
 		{
 			"name": "get test user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"/* Expected structure of response:\r",
+							"{'name': name,\r",
+							" 'age':age,\r",
+							" 'salary': salary,\r",
+							" 'family':{'children':[['Alex', 24],['Kate', 12]],\r",
+							" 'u_salary_1.5_year': salary * 4}\r",
+							"  }\r",
+							"*/\r",
+							"\r",
+							"pm.test(\"Response has expected structure\", () => {\r",
+							"    pm.expect(jsonData.name).to.be.a(\"string\");\r",
+							"    pm.expect(jsonData.age).to.be.a(\"number\");\r",
+							"    pm.expect(jsonData.salary).to.be.a(\"number\");\r",
+							"    pm.expect(jsonData.u_salary_1_5_year).to.eql(parseInt(pm.variables.get(\"salary\")) * 4);\r",
+							"    pm.expect(jsonData.family).to.be.an(\"object\");\r",
+							"    pm.expect(jsonData.family.children).to.be.a(\"array\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"name in response equal name in environment\", () => {\r",
+							"    pm.expect(jsonData.name).to.eql(pm.variables.get(\"name\"));\r",
+							"});\r",
+							"\r",
+							"pm.test(\"age in response equal age in request\", () => {\r",
+							"    pm.expect(jsonData.age).to.eql(parseInt(pm.variables.get(\"age\")));\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -197,7 +352,7 @@
 						},
 						{
 							"key": "salary",
-							"value": "{{salary}}",
+							"value": "{{u_salary_1_5_year}}",
 							"type": "text"
 						},
 						{
@@ -221,6 +376,21 @@
 		},
 		{
 			"name": "currency",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const jsonData = pm.response.json();\r",
+							"\r",
+							"let random = Math.floor(Math.random() * jsonData.length);\r",
+							"\r",
+							"postman.setEnvironmentVariable(\"curr_code\", jsonData[random].Cur_ID);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -248,9 +418,58 @@
 		},
 		{
 			"name": "currency byn",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"const jsonData = pm.response.json();\r",
+							"/* Expected structure of response:\r",
+							"{\r",
+							"    \"Cur_Abbreviation\": str\r",
+							"    \"Cur_ID\": int,\r",
+							"    \"Cur_Name\": str,\r",
+							"    \"Cur_OfficialRate\": float,\r",
+							"    \"Cur_Scale\": int,\r",
+							"    \"Date\": str\r",
+							"}\r",
+							"*/\r",
+							"\r",
+							"pm.test(\"Response has expected structure\", () => {\r",
+							"    pm.expect(jsonData.Cur_Abbreviation).to.be.a(\"string\");\r",
+							"    pm.expect(jsonData.Cur_ID).to.be.a(\"number\");\r",
+							"    pm.expect(jsonData.Cur_Name).to.be.a(\"string\");\r",
+							"    pm.expect(jsonData.Cur_OfficialRate).to.be.a(\"number\");\r",
+							"    pm.expect(jsonData.Cur_Scale).to.be.a(\"number\");\r",
+							"    pm.expect(jsonData.Cur_Date).to.be.a(\"string\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "auth_token",
+							"value": "{{token}}",
+							"type": "text"
+						},
+						{
+							"key": "curr_code",
+							"value": "{{curr_code}}",
+							"type": "text"
+						}
+					]
+				},
 				"url": {
 					"raw": "{{URL}}/curr_byn",
 					"host": [
